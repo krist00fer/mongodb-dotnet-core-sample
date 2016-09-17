@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace MongoDB_Sample
 {
@@ -11,23 +9,52 @@ namespace MongoDB_Sample
     {
         public static void Main(string[] args)
         {
-            var client = new MongoClient();
-            var db = client.GetDatabase("dotnet-core-sample");
+            var client = new MongoClient("mongodb://localhost:27017");
+            
+            var db = client.GetDatabase("profiles");
 
-            var collection = db.GetCollection<Album>("albums");
-            collection.InsertOne(new Album
+            var collection = db.GetCollection<Player>("players");
+            
+            // DEMO, remove all previous players if there are any
+            collection.DeleteMany(p => true);
+
+
+            collection.InsertOne(new Player
             {
-                Title = "Bad",
-                Artist = "Michael Jackson",
-                Year = 1987
+                Gamertag = "krist00fer",
+                Location = "Sweden",
+                OtherPreference = "Meatballs"
             });
+
+            Console.WriteLine("First player inserted");
+
+            collection.InsertOne(new Player
+            {
+                Gamertag = "livkl",
+                Location = "Germany",
+                OtherPreference = "Sauerkraut"
+            });
+
+            Console.WriteLine("Second player inserted");
+
+            Console.WriteLine();
+            Console.WriteLine("Querying players from Germany");
+
+            var germanPlayers = collection.Find(p => p.Location == "Germany").ToList();
+
+            foreach (var player in germanPlayers)
+            {
+                Console.WriteLine($"Gamertag: {player.Gamertag} has special preference of: {player.OtherPreference}");
+            }
+            Console.WriteLine();
         }
     }
 
-    public class Album
+    public class Player
     {
-        public string Title { get; set; }
-        public string Artist { get; set; }
-        public int Year { get; set; }
+        [BsonId]
+        public string Gamertag { get; set; }
+        public string Location { get; set; }
+        public string OtherPreference { get; set; }
     }
 }
